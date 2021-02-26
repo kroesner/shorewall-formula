@@ -1,49 +1,21 @@
-# !!! FILE MANAGED BY SALT !!!
-#
-# Shorewall version {{ pkg_version }} - Sample Interfaces File for one-interface configuration.
-# Copyright (C) 2006 by the Shorewall Team
-#
-# This library is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License as published by the Free Software Foundation; either
-# version 2.1 of the License, or (at your option) any later version.
-#
-# See the file README.txt for further details.
-#------------------------------------------------------------------------------
-# For information about entries in this file, type "man shorewall-interfaces"
-###############################################################################
-{%- if pkg_version|float() >= 4.6 %}
-  {% set format = '?FORMAT' %}
-{%- else %}
-  {% set format = 'FORMAT' %}
-{%- endif %}
-{{ format }} 2
-###############################################################################
-#ZONE   INTERFACE       OPTIONS
+?FORMAT 2
 
-{#- delete ipv4 options not supported in ipv6 -#}
-{%- macro delete_ipv4_options(options) -%}
-{%-   set ipv4_only_options = ['arp_filter', 'arp_ignore', 'logmartians', 'nosmurfs', 'proxyarp', 'routefilter'] -%}
-{%-   set ipv6_options = [] -%}
-{%-   for option in options.split(',') if option not in ipv4_only_options -%}
-{%-     do ipv6_options.append(option) -%}
-{%-   endfor -%}
+{% macro delete_ipv4_options(options) %}
+{%   set ipv4_only_options = ['arp_filter', 'arp_ignore', 'logmartians', 'nosmurfs', 'proxyarp', 'routefilter'] %}
+{%   set ipv6_options = [] %}
+{%   for option in options.split(',') if option not in ipv4_only_options %}
+{%     do ipv6_options.append(option) %}
+{%   endfor %}
 {{ ','.join(ipv6_options) }}
-{%- endmacro -%}
-
-{%- for zone, zone_data in salt['pillar.get']('shorewall:zones', {})|dictsort %}
-{#    skip if ip version does not match #}
-{%-   if zone_data.ipv is defined and zone_data.ipv != ipv %}{% continue %}{%endif %}
-{%-   for interface, interface_data in zone_data.get('interfaces', {})|dictsort %}
-{#      skip if ip version does not match #}
-{%-     if interface_data.ipv is defined and interface_data.ipv != ipv %}{% continue %}{%endif %}
-
-# {{ interface }}
-# {{ interface_data.comment if interface_data.comment is defined else '' }}
-{%- if ipv == 4 %}
-{{ zone }}  {{ interface }}  {{ interface_data.get('options', '') }}
-{%- else %}
-{{ zone }}  {{ interface }}  {{ delete_ipv4_options(interface_data.get('options', '')) }}
-{%- endif %}
-{%-   endfor %}
-{%- endfor %}
+{% endmacro %}
+{% for zone_key, zone in salt['pillar.get']('shorewall:zones', {})|dictsort %}
+  {% if zone.ipv is defined and zone.ipv != ipv %}{% continue %}{% endif %}
+  {% for interface_key, interface in zone.get('interfaces', {})|dictsort %}
+    {% if interface.ipv is defined and interface.ipv != ipv %}{% continue %}{% endif %}
+    {% if ipv == 4 %}
+{{ zone_key }} {{ interface_key }} {{ interface.get('options', '') }}
+    {% else %}
+{{ zone_key }} {{ interface_key }} {{ delete_ipv4_options(interface.get('options', '')) }}
+    {% endif %}
+  {% endfor %}
+{% endfor %}
