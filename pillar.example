@@ -1,4 +1,5 @@
 shorewall:
+  routing: Off
   etcdefault:
     startup: 1
     wait_interface: False

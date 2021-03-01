@@ -1,3 +1,5 @@
+{%- set routing = salt['pillar.get']('shorewall:routing', 'Off') %}
+
 STARTUP_ENABLED=Yes
 VERBOSITY=1
 
@@ -28,7 +30,7 @@ EXPAND_POLICIES=Yes
 EXPORTMODULES=Yes
 FASTACCEPT=No
 HELPERS=none
-IP_FORWARDING=Keep
+IP_FORWARDING={{ routing }}
 MACLIST_TABLE=filter
 MANGLE_ENABLED=No
 RESTART=restart
